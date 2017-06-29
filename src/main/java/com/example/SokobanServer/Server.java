@@ -31,9 +31,9 @@ public class Server {
 					public void run() {
 						try {
 							ch.handleClient(aClient, aClient.getInputStream(), aClient.getOutputStream());
-							//aClient.getInputStream().close();
-							//aClient.getOutputStream().close();
-							//aClient.close();
+							aClient.getInputStream().close();
+							aClient.getOutputStream().close();
+							aClient.close();
 						} catch (IOException e) {
 							/* ... */
 						}

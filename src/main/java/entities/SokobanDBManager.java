@@ -11,6 +11,9 @@ import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.query.Query;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 
  public class SokobanDBManager extends Observable implements DBmanager{
 	 private static SessionFactory factory;
@@ -162,5 +165,68 @@ import org.hibernate.query.Query;
 			}
 
 		}
+		/**
+		 * This function shows a specific scores for player.
+		 * @param selectedScore- the score that the user click on.
+		 * @return- return a table.
+		 */
+			public ObservableList<ScoresManager> getUser(ScoresManager selectedScore) {
 
+				ObservableList<ScoresManager> users = FXCollections.observableArrayList();
+				Query<ScoresManager> query = HibernateUtil.getSessionFactory().openSession().createQuery("from Scores S where S.fullname='" + selectedScore.getFullname() + "'");
+				List<ScoresManager> list = query.list();
+
+				for (ScoresManager u : list) {
+					users.add(u);
+				}
+				for (ScoresManager user : users)
+					user.toString();
+
+				return users;
+			}
+		/**
+		 * This function shows all scores.
+		 * @return-return a table of the scores.
+		 */
+		public ObservableList<ScoresManager> getAllScores() {
+			ObservableList<ScoresManager> users = FXCollections.observableArrayList();
+				Query<ScoresManager> query = HibernateUtil.getSessionFactory().openSession().createQuery("from Scores");
+				query.setMaxResults(10);
+				List<ScoresManager> list = query.list();
+				if (!list.isEmpty()) {
+
+					for (ScoresManager u : list) {
+						users.add(u);
+					}
+					for (ScoresManager user : users)
+						user.toString();
+					return users;
+				}
+				return users;
+			}
+
+		/**
+		 * This function shows all scores from db.
+		 * @param levelName- the name of the level that we want to see all the scores.
+		 * @return- return a table.
+		 */
+		public ObservableList<ScoresManager> getUsers(String levelName) {
+			ObservableList<ScoresManager> users = FXCollections.observableArrayList();
+			if(levelName!=null)
+			{
+				Query<ScoresManager> query = HibernateUtil.getSessionFactory().openSession().createQuery("from Scores S where S.levelname='"+levelName+"'");
+				query.setMaxResults(10);
+				List<ScoresManager> list = query.list();
+				if (!list.isEmpty()) {
+
+					for (ScoresManager u : list) {
+						users.add(u);
+					}
+					for (ScoresManager user : users)
+						user.toString();
+					return users;
+				}
+			}
+					return users;
+		}
  }

@@ -1,16 +1,17 @@
 package com.example.SokobanServer;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -18,6 +19,11 @@ import com.example.server.model.AdminModel;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 
+import entities.DbBin;
+import entities.ScoresManager;
+import entities.SokobanDBManager;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import model.LevelBin;
 
 
@@ -27,29 +33,53 @@ public class SokobanClientHandler implements ClientHandler {
 	@Override
 	public void handleClient(Socket socket, InputStream in, OutputStream out) {
 		ObjectInputStream ois = null;
-		PrintWriter writer = null;
+		ObjectOutputStream writer = null;
+		SokobanDBManager manager=new SokobanDBManager();
 		try {
 			ois = new ObjectInputStream(in);
-			writer = new PrintWriter(out);
+			writer = new ObjectOutputStream(out);
+			Object next = ois.readObject();
+			if (next instanceof LevelBin)
+			{
+				LevelBin game = (LevelBin)next;
+				String name = game.getName();
+				String userName = game.getUserName();
+				String level=game.getLevelString();
 
-			LevelBin game = (LevelBin)ois.readObject();
-			String name = game.getName();
-			String userName = game.getUserName();
-			String level=game.getLevelString();
+				AdminModel.getInstance().addClient(userName, socket);
 
-			AdminModel.getInstance().addClient(userName, socket);
-
-			String solution = getSolutionFromService(name,level);
-			if (solution == null) {
-				// call Strips ...
-				// save the solution via the service
+				String solution = getSolutionFromService(name,level);
+				if (solution == null) {
+					// call Strips ...
+					// save the solution via the service
+				}
+				writer.writeObject(solution);
+				writer.flush();
 			}
-			writer.println(solution);
-			writer.flush();
-
-		} catch (IOException e) {
+			if (next instanceof DbBin)
+			{
+				DbBin db=(DbBin)next;
+				manager.checkIfsave(db.getName(), db.getLevelName(), db.getStep(), db.getTime());
+			}
+			if (next instanceof String)
+			{
+				if(next.toString().equals("show all scores"))
+				{
+					ObservableList<ScoresManager> solution=FXCollections.observableArrayList();
+					solution=manager.getAllScores();
+					FileOutputStream fos = new FileOutputStream("Objectsavefile.ser");
+					writer=new ObjectOutputStream(fos);
+					writer.writeObject(new ArrayList<ScoresManager>(solution));
+					writer.flush();
+				}
+			}
+		}
+		catch (IOException e)
+		{
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
+		}
+		catch (ClassNotFoundException e)
+		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
